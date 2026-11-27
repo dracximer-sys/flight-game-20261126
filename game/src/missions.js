@@ -219,7 +219,8 @@ export function objectiveText(mission, plane) {
   if (!objective) return 'Misi selesai!';
   if (objective.type === 'ring') {
     const left = mission.objectives.filter((item) => item.type === 'ring' && !item.passed).length;
-    return `Ring ${mission.ringsPassed + 1} dari ${mission.ringsPassed + left} — terbang melewati ring emas`;
+    const total = mission.ringsPassed + left;
+    return `RING ${mission.ringsPassed + 1}/${total} — terbang melewati ring emas`;
   }
   return `Mendarat di ${objective.runway.name}`;
 }
@@ -228,7 +229,7 @@ export function objectiveSub(mission, plane) {
   const objective = currentObjective(mission);
   if (!objective) return '';
   const distance = Math.round(distanceTo(plane, objective));
-  if (objective.type === 'ring') return `Jarak ${distance} m · ketinggian ring ${Math.round(objective.y)} m`;
+  if (objective.type === 'ring') return `Jarak ${distance} m · ring di ketinggian ${Math.round(objective.y)} m`;
   return `Jarak ${distance} m · samakan arah dengan runway`;
 }
 

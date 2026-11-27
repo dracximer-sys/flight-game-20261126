@@ -138,16 +138,19 @@ export function drawAircraft(ctx, plane, cx, cy, size) {
   ctx.fill();
   ctx.stroke();
 
-  // Spinning prop at the nose: a translucent disc and two blades.
+  // Spinning prop at the nose: a translucent disc and two crossed blades,
+  // so it reads as a propeller instead of a single dark stick.
   const propY = -chord * 1.52;
   ctx.save();
   ctx.translate(0, propY);
   ctx.rotate(plane.propAngle);
-  ctx.strokeStyle = 'rgba(60, 60, 60, 0.85)';
-  ctx.lineWidth = size * 0.03;
+  ctx.strokeStyle = 'rgba(50, 50, 50, 0.9)';
+  ctx.lineWidth = size * 0.028;
   ctx.beginPath();
-  ctx.moveTo(0, -size * 0.16);
-  ctx.lineTo(0, size * 0.16);
+  ctx.moveTo(0, -size * 0.17);
+  ctx.lineTo(0, size * 0.17);
+  ctx.moveTo(-size * 0.17, 0);
+  ctx.lineTo(size * 0.17, 0);
   ctx.stroke();
   ctx.restore();
   ctx.fillStyle = 'rgba(200, 210, 215, 0.18)';
@@ -155,14 +158,23 @@ export function drawAircraft(ctx, plane, cx, cy, size) {
   ctx.ellipse(0, propY, size * 0.17, size * 0.17, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Navigation lights: red on the left tip, green on the right.
+  // Navigation lights: red on the left tip, green on the right, each
+  // with a soft halo so they read against bright sky and sea.
+  ctx.fillStyle = 'rgba(255, 59, 48, 0.25)';
+  ctx.beginPath();
+  ctx.arc(-span / 2, chord * 0.05, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(52, 199, 89, 0.25)';
+  ctx.beginPath();
+  ctx.arc(span / 2, chord * 0.05, 7, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = '#ff3b30';
   ctx.beginPath();
-  ctx.arc(-span / 2, chord * 0.05, 3, 0, Math.PI * 2);
+  ctx.arc(-span / 2, chord * 0.05, 4, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#34c759';
   ctx.beginPath();
-  ctx.arc(span / 2, chord * 0.05, 3, 0, Math.PI * 2);
+  ctx.arc(span / 2, chord * 0.05, 4, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();

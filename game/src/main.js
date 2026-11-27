@@ -347,15 +347,17 @@ function stageShot(game, shot) {
     return;
   }
   if (shot === 'landing') {
-    // Final approach to runway B: lined up, 620 m out, descending gently.
+    // Final approach to runway B: lined up, 400 m out, descending gently.
+    // Close enough that the strip, its centreline and edge lights fill
+    // the frame instead of reading as a thin dash on the horizon.
     startMission(game, 'island-hop');
     const runway = RUNWAYS[1];
-    const along = -runway.length / 2 - 620;
+    const along = -runway.length / 2 - 400;
     game.plane.x = runway.x + Math.sin(runway.heading) * along;
     game.plane.z = runway.z + Math.cos(runway.heading) * along;
     game.plane.heading = runway.heading;
-    game.plane.altitude = heightAt(runway.x, runway.z) + 62;
-    game.plane.speed = 38;
+    game.plane.altitude = heightAt(runway.x, runway.z) + 48;
+    game.plane.speed = 36;
     game.plane.throttle = 0.55;
     game.plane.onGround = false;
     // Guides already flown; the landing itself is the objective.
@@ -388,12 +390,15 @@ function stageShot(game, shot) {
 }
 
 function drawShotHud(game) {
+  const ringObjectives = game.mission.objectives.filter((item) => item.type === 'ring');
   const state = {
     plane: game.plane,
     score: game.score,
     timeLeft: game.mission.timeLeft,
     objectiveText: objectiveText(game.mission, game.plane),
     objectiveSub: objectiveSub(game.mission, game.plane),
+    ringsPassed: game.mission.ringsPassed,
+    ringsTotal: ringObjectives.length,
     groundHeight: heightAt(game.plane.x, game.plane.z),
     stalled: false,
   };
@@ -467,12 +472,15 @@ function drawFrame(game, dt) {
   // Playing.
   renderWorld(ctx, game, width, height, game.time);
   updateAndDrawParticles(ctx, game.particles, dt);
+  const ringObjectives = game.mission.objectives.filter((item) => item.type === 'ring');
   const state = {
     plane: game.plane,
     score: game.score,
     timeLeft: game.mission.timeLeft,
     objectiveText: objectiveText(game.mission, game.plane),
     objectiveSub: objectiveSub(game.mission, game.plane),
+    ringsPassed: game.mission.ringsPassed,
+    ringsTotal: ringObjectives.length,
     groundHeight: heightAt(game.plane.x, game.plane.z),
     stalled: game.plane.speed < 14 && !game.plane.onGround,
   };

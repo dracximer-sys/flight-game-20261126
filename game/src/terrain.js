@@ -115,15 +115,23 @@ export function heightAt(x, z) {
   return height;
 }
 
-// What kind of ground (x, z) is, for colouring: water, sand, paddy, grass,
-// forest, rock or snow. Rice paddies are a checker of flat low fields.
+// What kind of ground (x, z) is, for colouring: water, wet sand at the
+// waterline, sand, paddy, grass, forest, rock or snow. Rice paddies are a
+// checker of flat low fields. The bands are tuned so the volcano keeps a
+// small snow cap and the low islands stay green and gold, not white.
 export function terrainKind(x, z) {
   const height = heightAt(x, z);
   if (height <= 0.6) return 'water';
+  // Wet sand right at the waterline draws the shoreline as a dark rim
+  // around every island, so the coast reads even in a small screenshot.
+  if (height <= 1.2) return 'wetSand';
   if (height <= 2.2) return 'sand';
-  if (height > 46) return 'snow';
-  if (height > 30) return 'rock';
-  if (height > 13) return 'forest';
+  // Snow only on the true summit now (was 46 m): the volcano keeps a
+  // small white cap instead of a broad white plate, and the home island
+  // tops out in rock instead of snow.
+  if (height > 78) return 'snow';
+  if (height > 55) return 'rock';
+  if (height > 20) return 'forest';
   // Paddy checker: only on flat low ground, cells of about 90 m.
   const cellX = Math.floor(x / 90);
   const cellZ = Math.floor(z / 90);

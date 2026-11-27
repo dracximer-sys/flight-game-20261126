@@ -51,7 +51,7 @@ function bigNumber(ctx, text, x, y, size, colour, align) {
 function drawSpeedTape(ctx, speedKmh, x, y, w, h) {
   panel(ctx, x, y, w, h);
   label(ctx, 'KECEPATAN', x + 10, y + 14, 11, DIM, 'left');
-  bigNumber(ctx, `${Math.round(speedKmh)}`, x + w - 12, y + 42, 30, INK, 'right');
+  bigNumber(ctx, `${Math.round(speedKmh)}`, x + w - 12, y + 42, 32, INK, 'right');
   label(ctx, 'km/jam', x + w - 12, y + 66, 11, DIM, 'right');
   // A thin marker showing where this speed sits between 0 and 210 km/h.
   const frac = Math.max(0, Math.min(1, speedKmh / 210));
@@ -63,7 +63,7 @@ function drawSpeedTape(ctx, speedKmh, x, y, w, h) {
 function drawAltitudeTape(ctx, altitude, x, y, w, h) {
   panel(ctx, x, y, w, h);
   label(ctx, 'KETINGGIAN', x + 10, y + 14, 11, DIM, 'left');
-  bigNumber(ctx, `${Math.round(altitude)}`, x + w - 12, y + 42, 30, INK, 'right');
+  bigNumber(ctx, `${Math.round(altitude)}`, x + w - 12, y + 42, 32, INK, 'right');
   label(ctx, 'meter', x + w - 12, y + 66, 11, DIM, 'right');
   const frac = Math.max(0, Math.min(1, altitude / 300));
   ctx.fillStyle = '#4db8e8';
@@ -134,19 +134,43 @@ function drawStatusBlock(ctx, state, width) {
   label(ctx, 'WAKTU', x + 12, y + 82, 11, DIM, 'left');
 }
 
-// Bottom-centre: the current objective and the next waypoint distance.
+// Bottom-centre: the current objective, the next waypoint distance, and
+// a row of ring pips (gold = flown, outline = left) so the mission
+// progress reads at a glance even in a small screenshot.
 function drawObjectiveBar(ctx, state, width, height) {
   const text = state.objectiveText;
   const sub = state.objectiveSub || '';
-  ctx.font = '600 15px system-ui, sans-serif';
+  const ringsTotal = state.ringsTotal || 0;
+  const ringsPassed = state.ringsPassed || 0;
+  ctx.font = '600 16px system-ui, sans-serif';
   const textWidth = ctx.measureText(text).width;
+  ctx.font = '600 12px system-ui, sans-serif';
   const subWidth = sub ? ctx.measureText(sub).width : 0;
-  const w = Math.max(textWidth, subWidth) + 36;
+  const dotsWidth = ringsTotal > 0 ? ringsTotal * 16 : 0;
+  const w = Math.max(textWidth, subWidth, dotsWidth) + 36;
   const x = (width - w) / 2;
-  const y = height - 64;
-  panel(ctx, x, y, w, sub ? 52 : 36);
-  label(ctx, text, width / 2, y + (sub ? 15 : 18), 15, INK, 'center');
-  if (sub) label(ctx, sub, width / 2, y + 37, 12, DIM, 'center');
+  const y = height - 64 - (ringsTotal > 0 ? 16 : 0);
+  const panelHeight = ringsTotal > 0 ? 68 : sub ? 52 : 36;
+  panel(ctx, x, y, w, panelHeight);
+  label(ctx, text, width / 2, y + 16, 16, INK, 'center');
+  if (sub) label(ctx, sub, width / 2, y + 38, 12, DIM, 'center');
+  if (ringsTotal > 0) {
+    const dotsY = y + 56;
+    const startX = width / 2 - ((ringsTotal - 1) * 16) / 2;
+    for (let i = 0; i < ringsTotal; i += 1) {
+      const dotX = startX + i * 16;
+      ctx.beginPath();
+      ctx.arc(dotX, dotsY, 4.5, 0, Math.PI * 2);
+      if (i < ringsPassed) {
+        ctx.fillStyle = '#ffc93c';
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = 'rgba(255, 201, 60, 0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+  }
 }
 
 // Centre-screen warnings: low fuel, pull up, stall. They sit high enough

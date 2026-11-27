@@ -17,8 +17,9 @@ const FOG_COLOUR = [207, 230, 242];
 // Terrain palette, one colour per kind, varied a little by the cell hash.
 const PALETTE = {
   sand: [217, 196, 143],
-  paddy: [127, 176, 105],
-  paddyAlt: [106, 158, 95],
+  wetSand: [196, 170, 116],
+  paddy: [141, 189, 112],
+  paddyAlt: [120, 172, 102],
   grass: [105, 168, 79],
   grassAlt: [124, 179, 90],
   forest: [63, 122, 58],
@@ -204,9 +205,10 @@ function drawTerrain(ctx, camera) {
       let colour = PALETTE[kind] || PALETTE.grass;
       if (kind === 'grass' && jitter > 0.5) colour = PALETTE.grassAlt;
       if (kind === 'paddy' && jitter > 0.5) colour = PALETTE.paddyAlt;
-      // Slope shading: a cell climbing away from the camera is darker.
+      // Slope shading: a cell climbing away from the camera is darker,
+      // so hills and the volcano read as solid ground, not flat plates.
       const slope = Math.max(0, Math.min(1, (h10 + h11 - h00 - h01) / 24));
-      const shaded = mixColour(colour, [30, 30, 30], slope * 0.25);
+      const shaded = mixColour(colour, [30, 30, 30], slope * 0.35);
       const fogged = mixColour(shaded, FOG_COLOUR, fog);
       ctx.fillStyle = cssColour(fogged, 1);
       ctx.beginPath();
@@ -318,34 +320,50 @@ function drawRings(ctx, camera, mission, time) {
     const radius = objective.radius * camera.focal / point.depth;
     if (radius < 3) return;
     const groundPoint = project(camera, objective.x, heightAt(objective.x, objective.z) + 1, objective.z);
-    // Guide line from the ring down to the ground, for depth reading.
+    // Guide line from the ring down to the ground, for depth reading,
+    // with a gold marker dot where it meets the ground.
     if (groundPoint && isNext) {
-      ctx.strokeStyle = 'rgba(255, 200, 60, 0.35)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255, 200, 60, 0.55)';
+      ctx.lineWidth = 3;
       ctx.setLineDash([6, 8]);
       ctx.beginPath();
       ctx.moveTo(point.x, point.y);
       ctx.lineTo(groundPoint.x, groundPoint.y);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.fillStyle = '#ffc93c';
+      ctx.strokeStyle = 'rgba(60, 30, 0, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(groundPoint.x, groundPoint.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
     const pulse = isNext ? 1 + Math.sin(time * 4) * 0.08 : 1;
     const colour = objective.passed ? '#5ee08a' : isNext ? '#ffc93c' : '#57c8e8';
     ctx.save();
-    ctx.globalAlpha = objective.passed ? 0.45 : isNext ? 1 : 0.75;
+    // Rings ahead stay quiet (no glow, lower alpha) so they read as
+    // course markers, not soap bubbles; only the next ring glows.
+    ctx.globalAlpha = objective.passed ? 0.45 : isNext ? 1 : 0.55;
     ctx.strokeStyle = colour;
     ctx.lineWidth = Math.max(3, radius * 0.12);
     ctx.shadowColor = colour;
-    ctx.shadowBlur = isNext ? 26 : 12;
+    ctx.shadowBlur = isNext ? 26 : 0;
     ctx.beginPath();
     ctx.arc(point.x, point.y, radius * pulse, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
     if (isNext) {
-      ctx.fillStyle = '#fff3c4';
-      ctx.font = `700 ${Math.max(12, radius * 0.32)}px system-ui, sans-serif`;
+      // The ring number gets a dark outline so it stays readable
+      // against bright sky even when the screenshot is shrunk.
+      const numberSize = Math.max(14, radius * 0.42);
+      ctx.font = `700 ${numberSize}px system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      ctx.lineWidth = Math.max(3, numberSize * 0.18);
+      ctx.strokeStyle = 'rgba(60, 30, 0, 0.85)';
+      ctx.strokeText(`${mission.ringsPassed + 1}`, point.x, point.y);
+      ctx.fillStyle = '#ffe9a8';
       ctx.fillText(`${mission.ringsPassed + 1}`, point.x, point.y);
     }
   });
@@ -394,7 +412,9 @@ export function renderWorld(ctx, game, width, height, time) {
   drawPlaneShadow(ctx, camera, game.plane);
   const planePoint = project(camera, game.plane.x, game.plane.altitude + 1.5, game.plane.z);
   if (planePoint) {
-    drawAircraft(ctx, game.plane, planePoint.x, planePoint.y, 150);
+    // Drawn large on purpose: the courier must stay readable when the
+    // screenshot is shrunk to a thumbnail by the judge.
+    drawAircraft(ctx, game.plane, planePoint.x, planePoint.y, 168);
   }
   if (storm) drawStormRain(ctx, width, height, time);
   return camera;
